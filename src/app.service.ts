@@ -57,7 +57,7 @@ export class AppService {
       );
     }
     return this.db.query(
-      `INSERT INTO Employees (name, dob, phone, email, salary, status, department_id) VALUES (?,?,?,?,?,?,?)`,
+      `INSERT INTO Employees (name, dob, phone, email, salary, status, department_id, photo) VALUES (?,?,?,?,?,?,?,?)`,
       [
         params.name,
         params.dob,
@@ -66,6 +66,7 @@ export class AppService {
         params.salary,
         'Active',
         params.department_id,
+        params.photo || null,
       ],
     );
   }
@@ -110,7 +111,11 @@ export class AppService {
       FROM Employees
       GROUP BY salary_range
     `;
-    return this.db.query(query);
+    const result = await this.db.query(query);
+    return result.reduce(
+      (acc, curr) => ({ ...acc, [curr.salary_range]: curr.count }),
+      {},
+    );
   }
   async departmentWiseHighestSalary() {
     const query = `
@@ -165,6 +170,7 @@ export class AppService {
           e.id,
           e.name AS name,
           d.name AS department_name,
+          e.department_id,
           DATE_FORMAT(e.dob, '%Y-%m-%d') AS dob ,
           e.phone,
           e.email,
