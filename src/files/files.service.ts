@@ -19,6 +19,7 @@ export class FilesService {
 
     try {
       await fsPromises.writeFile(filePath, file.buffer);
+      console.log('uploaded file to path:', filePath.replace('public/', ''));
       return { filePath: filePath.replace('public/', '') };
     } catch (error) {
       throw new Error(`Failed to upload file: ${error.message}`);

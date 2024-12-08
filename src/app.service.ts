@@ -19,11 +19,28 @@ export class AppService {
     return result[0].count;
   }
   async getEmployeeList(params: { skip: number; limit: number }) {
+    console.log('getEmployeeList.params...', params);
     const result = await this.db.query(
-      `SELECT * FROM Employees LIMIT ? OFFSET ?`,
-      [params.limit, params.skip],
+      `SELECT 
+          e.id,
+          e.name AS name,
+          d.name AS department_name,
+          DATE_FORMAT(e.dob, '%Y-%m-%d') AS dob ,
+          e.phone,
+          e.email,
+          e.salary,
+          e.photo,
+          e.status,
+          e.created,
+          e.modified
+      FROM 
+          Employees e
+      LEFT JOIN 
+          Departments d ON e.department_id = d.id
+      LIMIT 
+          ${params.limit} OFFSET ${params.skip}`,
     );
-    return result;
+    return { data: result };
   }
   async createEmployee(params: Partial<EmployeeDTO>) {
     if (
@@ -47,8 +64,8 @@ export class AppService {
         params.phone,
         params.email,
         params.salary,
-        params.department_id,
         'Active',
+        params.department_id,
       ],
     );
   }
@@ -135,5 +152,36 @@ export class AppService {
     result['departmentWiseYougestEmployees'] =
       await this.getDepartmentWiseYougestEmployees();
     return result;
+  }
+  async getDepartmentList() {
+    return this.db.query(
+      `SELECT id, name FROM Departments WHERE status = 'Active'`,
+    );
+  }
+
+  async getEmployeeDetails(id: number) {
+    const result = await this.db.query(
+      `SELECT 
+          e.id,
+          e.name AS name,
+          d.name AS department_name,
+          DATE_FORMAT(e.dob, '%Y-%m-%d') AS dob ,
+          e.phone,
+          e.email,
+          e.salary,
+          e.photo,
+          e.status,
+          e.created,
+          e.modified
+      FROM 
+          Employees e
+      LEFT JOIN 
+          Departments d ON e.department_id = d.id
+      WHERE e.id = ${id}`,
+    );
+    if (result.length) {
+      return result[0];
+    }
+    throw new HttpException('Employee not found', HttpStatus.BAD_REQUEST);
   }
 }
